@@ -32,36 +32,49 @@ import imutils
 import cv2
 from libardrone import ardrone
 
+drone = None
 
 def cmd_vel(move_data):
-    # TODO
+    global drone
+    if move_data.linear.x == -1:
+        drone.move_right()
+    if move_data.linear.y == 1:
+        drone.move_forward()
+    if move_data.linear.z == 1:
+        drone.move_up()
+    if move_data.linear.x == 1:
+        drone.move_left()
+    if move_data.linear.y == -1:
+        drone.move_backward()
+    if move_data.linear.z == -1:
+        drone.move_down()
 
-def front_camera_image():
-    # TODO
 
-def odom():
-    # TODO
+def takeoff(_data):
+    global drone
+    drone.takeoff()
 
-def altitude():
-    # TODO
+def land(_data):
+    global drone
+    drone.land()
 
-def battery():
-    # TODO
+def reset(_data):
+    global drone
+    drone.reset()
 
-def tf():
-    # TODO
+def main(args):
+    rospy.init_node('drone_driver', anonymous=True)
+    drone = ardrone.ARDrone(True)
+    drone.reset()
+    cmd_vel_sub = rospy.Subscriber("/ardrone/cmd_vel", Twist, cmd_vel,  queue_size = 1)
+    takeoff_sub = rospy.Subscriber("/ardrone/takeoff", Empty, takeoff,  queue_size = 1)
+    land_sub = rospy.Subscriber("/ardrone/land", Empty, land,  queue_size = 1)
+    reset_sub = rospy.Subscriber("/ardrone/reset", Empty, reset,  queue_size = 1)
+    try:
+        rospy.spin()
+    except KeyboardInterrupt:
+        drone.halt()
+        print "Shutting down ROS ARDRONE DRIVER module"
 
-def nav_data():
-    # TODO
-
-def takeoff(data):
-    # TODO
-
-def land(data):
-    # TODO
-
-def reset(data):
-    # TODO
-
-def mag():
-    # TODO
+if __name__ == '__main__':
+    main(sys.argv)
