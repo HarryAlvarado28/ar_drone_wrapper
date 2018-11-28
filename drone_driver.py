@@ -24,6 +24,7 @@ import sys
 from std_msgs.msg import String
 from std_msgs.msg import Empty
 from geometry_msgs.msg import Twist
+import rospy
 # import the necessary packages
 from imutils import paths
 import numpy as np

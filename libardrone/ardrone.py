@@ -63,7 +63,7 @@ class ARDrone(object):
       MP4_360P_H264_360P_CODEC = 0x88,
     """
 
-    def __init__(self, is_ar_drone_2=False, hd=False, debug=DEBUG):
+    def __init__(self, is_ar_drone_2=True, hd=False, debug=DEBUG):
 
         self.seq_nr = 1
         self.timer_t = 0.2
