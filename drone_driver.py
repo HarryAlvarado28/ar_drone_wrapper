@@ -25,6 +25,7 @@ from std_msgs.msg import String
 from std_msgs.msg import Empty
 from geometry_msgs.msg import Twist
 import rospy
+from ar_drone_wrapper.msg import Navdata
 # import the necessary packages
 from imutils import paths
 import numpy as np
@@ -42,13 +43,24 @@ def images(drone):
         else:
             print "No inicio"
 
-def nav_data(drone):
+def nav_data(drone, pub_nav_data):
     rospy.loginfo("Stating navigation thread")
     while(True):
+        data = Navdata()
         if drone:
-            rospy.loginfo(drone.get_navdata())
+            nav_data_drone = drone.get_navdata()
+            data.batteryPercent = nav_data_drone[0]["battery"]
+            data.state = nav_data_drone[0]["ctrl_state"]
+            data.vx = nav_data_drone[0]["vx"]
+            data.vy = nav_data_drone[0]["vy"]
+            data.vz = nav_data_drone[0]["vz"]
+            data.altd = nav_data_drone[0]["altitude"]
+            data.rotX = nav_data_drone[0]["phi"]
+            data.rotY = nav_data_drone[0]["theta"]
+            data.rotZ = nav_data_drone[0]["psi"]
+            pub_nav_data.publish(data)
         else:
-            rospy.loginfo("np navgac")
+            rospy.loginfo("No data to publish")
 
 def cmd_vel(move_data):
     global drone
@@ -87,8 +99,9 @@ def main(args):
     takeoff_sub = rospy.Subscriber("/ardrone/takeoff", Empty, takeoff,  queue_size = 1)
     land_sub = rospy.Subscriber("/ardrone/land", Empty, land,  queue_size = 1)
     reset_sub = rospy.Subscriber("/ardrone/reset", Empty, reset,  queue_size = 1)
+    pub_nav_data = rospy.Publisher("/ardrone/navdata", Navdata, queue_size=1)
     # Use two threads to complete the drone data
-    nav_data_thread = Process(target=nav_data, args=(drone,))
+    nav_data_thread = Process(target=nav_data, args=(drone, pub_nav_data))
     images_thread = Process(target=images, args=(drone,))
     try:
         nav_data_thread.start()
