@@ -9,6 +9,7 @@ project(ar_drone_wrapper)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   rospy
+  message_generation std_msgs geometry_msgs image_transport
 )
 
 ## System dependencies are found with CMake's conventions
@@ -44,12 +45,42 @@ find_package(catkin REQUIRED COMPONENTS
 ##   * uncomment the generate_messages entry below
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
-## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
+add_message_files(
+    DIRECTORY msg
+    FILES
+    matrix33.msg
+    navdata_adc_data_frame.msg
+    navdata_altitude.msg
+    navdata_demo.msg
+    navdata_euler_angles.msg
+    navdata_games.msg
+    navdata_gyros_offsets.msg
+    navdata_hdvideo_stream.msg
+    navdata_kalman_pressure.msg
+    navdata_magneto.msg
+    Navdata.msg
+    navdata_phys_measures.msg
+    navdata_pressure_raw.msg
+    navdata_pwm.msg
+    navdata_raw_measures.msg
+    navdata_rc_references.msg
+    navdata_references.msg
+    navdata_time.msg
+    navdata_trackers_send.msg
+    navdata_trims.msg
+    navdata_video_stream.msg
+    navdata_vision_detect.msg
+    navdata_vision.msg
+    navdata_vision_of.msg
+    navdata_vision_perf.msg
+    navdata_vision_raw.msg
+    navdata_watchdog.msg
+    navdata_wifi.msg
+    navdata_wind_speed.msg
+    navdata_zimmu_3000.msg
+    vector21.msg
+    vector31.msg
+)
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -70,6 +101,10 @@ find_package(catkin REQUIRED COMPONENTS
 #   DEPENDENCIES
 #   std_msgs  # Or other packages containing msgs
 # )
+
+# Generate added messages and services with any dependencies listed here
+generate_messages(DEPENDENCIES geometry_msgs std_msgs)
+
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -101,6 +136,15 @@ find_package(catkin REQUIRED COMPONENTS
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
+DEPENDS libsdl-dev
+CATKIN_DEPENDS
+    rospy
+    image_transport
+    message_runtime
+    sensor_msgs
+    std_srvs
+    tf
+    camera_info_manager
 #  INCLUDE_DIRS include
 #  LIBRARIES ar_drone_wrapper
 #  CATKIN_DEPENDS rospy

@@ -35,14 +35,20 @@ from multiprocessing import Process
 
 drone = None
 
-def images():
+def images(drone):
     while(True):
-        print 'Images'
+        if drone:
+            print "iNICIO"
+        else:
+            print "No inicio"
 
-def nav_data():
+def nav_data(drone):
+    rospy.loginfo("Stating navigation thread")
     while(True):
-        print "nav_data"
-
+        if drone:
+            rospy.loginfo(drone.get_navdata())
+        else:
+            rospy.loginfo("np navgac")
 
 def cmd_vel(move_data):
     global drone
@@ -73,15 +79,17 @@ def reset(_data):
 
 def main(args):
     rospy.init_node('drone_driver', anonymous=True)
+    rospy.loginfo("Starting drone connection")
     drone = ardrone.ARDrone(True)
+    rospy.loginfo("Connection Success!!")
     drone.reset()
     cmd_vel_sub = rospy.Subscriber("/ardrone/cmd_vel", Twist, cmd_vel,  queue_size = 1)
     takeoff_sub = rospy.Subscriber("/ardrone/takeoff", Empty, takeoff,  queue_size = 1)
     land_sub = rospy.Subscriber("/ardrone/land", Empty, land,  queue_size = 1)
     reset_sub = rospy.Subscriber("/ardrone/reset", Empty, reset,  queue_size = 1)
     # Use two threads to complete the drone data
-    nav_data_thread = Process(target=nav_data)
-    images_thread = Process(target=images)
+    nav_data_thread = Process(target=nav_data, args=(drone,))
+    images_thread = Process(target=images, args=(drone,))
     try:
         nav_data_thread.start()
         nav_data_thread.join()
@@ -90,6 +98,7 @@ def main(args):
         rospy.spin()
     except KeyboardInterrupt:
         drone.halt()
+        nav_data_thread.terminate()
         print "Shutting down ROS ARDRONE DRIVER module"
 
 if __name__ == '__main__':
