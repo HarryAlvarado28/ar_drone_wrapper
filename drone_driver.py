@@ -39,7 +39,7 @@ drone = None
 def images(drone):
     while(True):
         if drone:
-            print "iNICIO"
+            print drone.get_image()
         else:
             print "No inicio"
 
@@ -80,6 +80,7 @@ def cmd_vel(move_data):
 def takeoff(_data):
     global drone
     drone.takeoff()
+    drone.hover()
 
 def land(_data):
     global drone
@@ -90,6 +91,7 @@ def reset(_data):
     drone.reset()
 
 def main(args):
+    global drone
     rospy.init_node('drone_driver', anonymous=True)
     rospy.loginfo("Starting drone connection")
     drone = ardrone.ARDrone(True)
@@ -101,13 +103,13 @@ def main(args):
     reset_sub = rospy.Subscriber("/ardrone/reset", Empty, reset,  queue_size = 1)
     pub_nav_data = rospy.Publisher("/ardrone/navdata", Navdata, queue_size=1)
     # Use two threads to complete the drone data
-    nav_data_thread = Process(target=nav_data, args=(drone, pub_nav_data))
-    images_thread = Process(target=images, args=(drone,))
+    #nav_data_thread = Process(target=nav_data, args=(drone, pub_nav_data))
+    #images_thread = Process(target=images, args=(drone,))
     try:
-        nav_data_thread.start()
-        nav_data_thread.join()
-        images_thread.start()
-        images_thread.join()
+        #nav_data_thread.start()
+        #nav_data_thread.join()
+        #images_thread.start()
+        #images_thread.join()
         rospy.spin()
     except KeyboardInterrupt:
         drone.halt()
