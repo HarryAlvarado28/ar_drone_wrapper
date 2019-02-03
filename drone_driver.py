@@ -35,32 +35,48 @@ from libardrone import ardrone
 from multiprocessing import Process
 
 drone = None
+pub_nav_data = rospy.Publisher("/ardrone/navdata", Navdata, queue_size=1)
+front_image_pub = rospy.Publisher("/ardrone/front_camera/raw_image_compressed", CompressedImage, queue_size=10)
+bottom_image_pub = rospy.Publisher("/ardrone/bottom_camera/raw_image_compressed", CompressedImage, queue_size=10)
+
 
 def images(drone):
-    while(True):
-        if drone:
-            print drone.get_image()
-        else:
-            print "No inicio"
+    rospy.loginfo("Image info thread")
+    if drone:
+        drone.set_camera_view(False)
+        msg = CompressedImage()
+        msg.header.stamp = rospy.Time.now()
+        msg.format = "jpeg"
+        compressed_images = cv2.imencode('.jpg', drone.get_image())
+        msg.data = np.array(compressed_images[1]).tostring()
+        front_image_pub.publish(msg)
+        drone.set_camera_view(True)
+        msg = CompressedImage()
+        msg.header.stamp = rospy.Time.now()
+        msg.format = "jpeg"
+        compressed_images = cv2.imencode('.jpg', drone.get_image())
+        msg.data = np.array(compressed_images[1]).tostring()
+        bottom_image_pub.publish(msg)
+    else:
+        rospy.loginfo("No inicio")
 
-def nav_data(drone, pub_nav_data):
-    rospy.loginfo("Stating navigation thread")
-    while(True):
-        data = Navdata()
-        if drone:
-            nav_data_drone = drone.get_navdata()
-            data.batteryPercent = nav_data_drone[0]["battery"]
-            data.state = nav_data_drone[0]["ctrl_state"]
-            data.vx = nav_data_drone[0]["vx"]
-            data.vy = nav_data_drone[0]["vy"]
-            data.vz = nav_data_drone[0]["vz"]
-            data.altd = nav_data_drone[0]["altitude"]
-            data.rotX = nav_data_drone[0]["phi"]
-            data.rotY = nav_data_drone[0]["theta"]
-            data.rotZ = nav_data_drone[0]["psi"]
-            pub_nav_data.publish(data)
-        else:
-            rospy.loginfo("No data to publish")
+def nav_data(drone):
+    rospy.loginfo("nav data thread")
+    data = Navdata()
+    if drone:
+        nav_data_drone = drone.get_navdata()
+        data.batteryPercent = nav_data_drone[0]["battery"]
+        data.state = nav_data_drone[0]["ctrl_state"]
+        data.vx = nav_data_drone[0]["vx"]
+        data.vy = nav_data_drone[0]["vy"]
+        data.vz = nav_data_drone[0]["vz"]
+        data.altd = nav_data_drone[0]["altitude"]
+        data.rotX = nav_data_drone[0]["phi"]
+        data.rotY = nav_data_drone[0]["theta"]
+        data.rotZ = nav_data_drone[0]["psi"]
+        pub_nav_data.publish(data)
+    else:
+        rospy.loginfo("No data to publish")
 
 def cmd_vel(move_data):
     global drone
@@ -76,6 +92,7 @@ def cmd_vel(move_data):
         drone.move_backward()
     if move_data.linear.z == -1:
         drone.move_down()
+    nav_data(drone)
 
 def takeoff(_data):
     global drone
@@ -101,15 +118,7 @@ def main(args):
     takeoff_sub = rospy.Subscriber("/ardrone/takeoff", Empty, takeoff,  queue_size = 1)
     land_sub = rospy.Subscriber("/ardrone/land", Empty, land,  queue_size = 1)
     reset_sub = rospy.Subscriber("/ardrone/reset", Empty, reset,  queue_size = 1)
-    pub_nav_data = rospy.Publisher("/ardrone/navdata", Navdata, queue_size=1)
-    # Use two threads to complete the drone data
-    #nav_data_thread = Process(target=nav_data, args=(drone, pub_nav_data))
-    #images_thread = Process(target=images, args=(drone,))
     try:
-        #nav_data_thread.start()
-        #nav_data_thread.join()
-        #images_thread.start()
-        #images_thread.join()
         rospy.spin()
     except KeyboardInterrupt:
         drone.halt()
