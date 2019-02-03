@@ -32,20 +32,27 @@ def key_action():
         vel_msg.linear.z = -1
     return vel_msg
 
+def callback(ros_data):
+    np_arr = np.fromstring(ros_data.data, np.uint8)
+    image_np = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+    screen = pygame.display.set_mode(video_size)
+    surf = pygame.surfarray.make_surface(image_np)
+    screen.blit(surf, (0, 0))
+    pygame.display.update()
+    vel_msg = key_action()
+    velocity_publisher.publish(vel_msg)
+
 def main(args):
     '''Initializes and cleanup ros node'''
     rospy.init_node('world_observation_client', anonymous=True)
+    subscriber = rospy.Subscriber('/ardrone/front_camera/raw_image_compressed', CompressedImage, callback)
     try:
         screen = pygame.display.set_mode(video_size)
-        while True:
-            surf = pygame.image.load(os.path.join('data', 'image.jpg'))
-            screen.blit(surf, (0, 0))
-            pygame.display.update()
-            vel_msg = key_action()
-            velocity_publisher.publish(vel_msg)
-            pygame.event.pump()
+        vel_msg = key_action()
+        velocity_publisher.publish(vel_msg)
+        rospy.spin()
     except KeyboardInterrupt:
-        print("Shutting down ROS Gym Image Viewer module")
+        print("Shutting down ROS Image Viewer module")
     cv2.destroyAllWindows()
 
 if __name__ == '__main__':
