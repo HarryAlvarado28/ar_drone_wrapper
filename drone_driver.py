@@ -23,6 +23,7 @@
 import sys
 from std_msgs.msg import String
 from std_msgs.msg import Empty
+from sensor_msgs.msg import CompressedImage
 from geometry_msgs.msg import Twist
 import rospy
 from ar_drone_wrapper.msg import Navdata
@@ -37,26 +38,26 @@ from multiprocessing import Process
 drone = None
 pub_nav_data = rospy.Publisher("/ardrone/navdata", Navdata, queue_size=1)
 front_image_pub = rospy.Publisher("/ardrone/front_camera/raw_image_compressed", CompressedImage, queue_size=10)
-bottom_image_pub = rospy.Publisher("/ardrone/bottom_camera/raw_image_compressed", CompressedImage, queue_size=10)
+#bottom_image_pub = rospy.Publisher("/ardrone/bottom_camera/raw_image_compressed", CompressedImage, queue_size=10)
 
 
 def images(drone):
     rospy.loginfo("Image info thread")
     if drone:
-        drone.set_camera_view(False)
+       # drone.set_camera_view(False)
         msg = CompressedImage()
         msg.header.stamp = rospy.Time.now()
         msg.format = "jpeg"
         compressed_images = cv2.imencode('.jpg', drone.get_image())
         msg.data = np.array(compressed_images[1]).tostring()
         front_image_pub.publish(msg)
-        drone.set_camera_view(True)
-        msg = CompressedImage()
-        msg.header.stamp = rospy.Time.now()
-        msg.format = "jpeg"
-        compressed_images = cv2.imencode('.jpg', drone.get_image())
-        msg.data = np.array(compressed_images[1]).tostring()
-        bottom_image_pub.publish(msg)
+       # drone.set_camera_view(True)
+       # msg = CompressedImage()
+      #  msg.header.stamp = rospy.Time.now()
+      #  msg.format = "jpeg"
+      #  compressed_images = cv2.imencode('.jpg', drone.get_image())
+      #  msg.data = np.array(compressed_images[1]).tostring()
+      #  bottom_image_pub.publish(msg)
     else:
         rospy.loginfo("No inicio")
 
@@ -92,7 +93,8 @@ def cmd_vel(move_data):
         drone.move_backward()
     if move_data.linear.z == -1:
         drone.move_down()
-    nav_data(drone)
+    images(drone)
+    #nav_data(drone)
 
 def takeoff(_data):
     global drone
